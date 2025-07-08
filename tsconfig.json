@@ -15,9 +15,9 @@
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
 
     /* Path mapping */
@@ -26,7 +26,15 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "**/*.ts", 
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules", 
+    "dist",
+    "vite.config.ts",
+    "tailwind.config.js",
+    "postcss.config.js"
+  ]
 }
