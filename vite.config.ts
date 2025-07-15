@@ -11,27 +11,19 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist',
-    sourcemap: false,
-    minify: 'terser',
-    target: 'esnext',
+    // Use esbuild for minification instead of terser
+    minify: 'esbuild',
+    // Optimize chunk size
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          ui: ['lucide-react', 'sonner']
         }
       }
     }
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'lucide-react']
-  },
   server: {
-    port: 3000,
-    host: true
-  },
-  preview: {
     port: 3000,
     host: true
   }
