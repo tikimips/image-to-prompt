@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { copyToClipboard, showTextForManualCopy } from './ui/utils';
 import { Upload, Camera, Wand2, Save, Share2, Copy, AlertCircle, Settings, RefreshCw } from 'lucide-react';
 import { SavedPrompt } from '../App';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { openAIService, OpenAIAnalysisResult } from '../services/openai';
 
 interface ImageUploadSectionProps {
@@ -460,7 +460,7 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
               </ol>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Debug & Test:</h4>
+              <h4 className="font-medium mb-2">Debug &amp; Test:</h4>
               <Button 
                 variant="outline" 
                 size="sm" 

@@ -7,7 +7,7 @@ import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Copy, Share2, Clock, Save, ImageIcon, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { QueryHistory as QueryHistoryType, SavedPrompt } from '../App';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { openAIService, ImageGenerationResult } from '../services/openai';
 
