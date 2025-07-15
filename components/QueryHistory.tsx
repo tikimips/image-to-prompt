@@ -5,10 +5,9 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Copy, Share2, Clock, Save, ImageIcon, Sparkles, Wand2, Loader2 } from 'lucide-react';
+import { Copy, Share2, Clock, Save, ImageIcon, Sparkles } from 'lucide-react';
 import { QueryHistory as QueryHistoryType, SavedPrompt } from '../App';
 import { toast } from 'sonner';
-import { openAIService, ImageGenerationResult } from '../services/openai';
 
 interface QueryHistoryProps {
   queries: QueryHistoryType[];
@@ -20,35 +19,9 @@ export function QueryHistory({ queries, onSave, onSaveFromHistory }: QueryHistor
   const [selectedQuery, setSelectedQuery] = useState<QueryHistoryType | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [promptName, setPromptName] = useState<string>('');
-  const [generatedImage, setGeneratedImage] = useState<ImageGenerationResult | null>(null);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-
-  const handleGenerateImage = async (query: QueryHistoryType) => {
-    if (!query.prompt) return;
-    
-    setIsGeneratingImage(true);
-    setGeneratedImage(null);
-    
-    try {
-      const result = await openAIService.generateImage(query.prompt, query.style);
-      setGeneratedImage(result);
-      
-      if (openAIService.isConfigured()) {
-        toast.success('Image generated successfully!');
-      } else {
-        toast.info('Demo image generated. Configure OpenAI API key for real image generation.');
-      }
-    } catch (error) {
-      console.error('Error generating image:', error);
-      toast.error('Failed to generate image. Please try again.');
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
 
   const handleQuerySelect = (query: QueryHistoryType) => {
     setSelectedQuery(query);
-    setGeneratedImage(null);
   };
 
   const copyToClipboard = (text: string) => {
@@ -180,71 +153,13 @@ export function QueryHistory({ queries, onSave, onSaveFromHistory }: QueryHistor
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <h3 className="font-medium">Original Image</h3>
-                  <img
-                    src={selectedQuery.imageUrl}
-                    alt="Original"
-                    className="w-full h-64 object-cover rounded-lg"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">Generated Image Preview</h3>
-                    <Button
-                      onClick={() => handleGenerateImage(selectedQuery)}
-                      disabled={isGeneratingImage}
-                      size="sm"
-                      variant="outline"
-                    >
-                      {isGeneratingImage ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {openAIService.isConfigured() ? 'Generating...' : 'Creating...'}
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          {openAIService.isConfigured() ? 'Generate Image' : 'Create Demo'}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  
-                  <div className="relative">
-                    {generatedImage ? (
-                      <div className="space-y-2">
-                        <img
-                          src={generatedImage.imageUrl}
-                          alt="Generated image from prompt"
-                          className="w-full h-64 object-cover rounded-lg"
-                        />
-                        {selectedQuery.style && selectedQuery.style !== 'unknown' && (
-                          <div className="absolute top-2 right-2">
-                            <Badge variant="secondary">
-                              {getStyleDisplayName(selectedQuery.style)}
-                            </Badge>
-                          </div>
-                        )}
-                        <div className="text-xs text-gray-500 text-center">
-                          {openAIService.isConfigured() ? 'Generated with DALL-E 3' : 'Demo image - Configure API key for real generation'}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500">
-                        <div className="text-center space-y-2">
-                          <ImageIcon className="h-12 w-12 mx-auto" />
-                          <p className="text-sm">Click "Generate Image" to create a preview</p>
-                          <p className="text-xs text-gray-400">
-                            {openAIService.isConfigured() ? 'Uses DALL-E 3 API' : 'Demo mode - uses sample images'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="space-y-3">
+                <h3 className="font-medium">Original Image</h3>
+                <img
+                  src={selectedQuery.imageUrl}
+                  alt="Original"
+                  className="w-full h-64 object-cover rounded-lg"
+                />
               </div>
 
               {selectedQuery.confidence && (
