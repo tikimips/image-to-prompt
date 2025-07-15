@@ -14,9 +14,10 @@ import { openAIService, ImageGenerationResult } from '../services/openai';
 interface QueryHistoryProps {
   queries: QueryHistoryType[];
   onSave: (prompt: SavedPrompt) => void;
+  onSaveFromHistory?: (prompt: SavedPrompt, queryId: string) => void;
 }
 
-export function QueryHistory({ queries, onSave }: QueryHistoryProps) {
+export function QueryHistory({ queries, onSave, onSaveFromHistory }: QueryHistoryProps) {
   const [selectedQuery, setSelectedQuery] = useState<QueryHistoryType | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [promptName, setPromptName] = useState<string>('');
@@ -48,7 +49,7 @@ export function QueryHistory({ queries, onSave }: QueryHistoryProps) {
 
   const handleQuerySelect = (query: QueryHistoryType) => {
     setSelectedQuery(query);
-    setGeneratedImage(null); // Reset generated image when selecting a new query
+    setGeneratedImage(null);
   };
 
   const copyToClipboard = (text: string) => {
@@ -82,7 +83,12 @@ export function QueryHistory({ queries, onSave }: QueryHistoryProps) {
       style: selectedQuery.style
     };
 
-    onSave(newPrompt);
+    if (onSaveFromHistory) {
+      onSaveFromHistory(newPrompt, selectedQuery.id);
+    } else {
+      onSave(newPrompt);
+    }
+    
     setShowSaveDialog(false);
     setPromptName('');
     toast.success('Prompt saved successfully!');
@@ -104,8 +110,6 @@ export function QueryHistory({ queries, onSave }: QueryHistoryProps) {
     };
     return styleMap[style] || style.charAt(0).toUpperCase() + style.slice(1);
   };
-
-
 
   if (queries.length === 0) {
     return (
