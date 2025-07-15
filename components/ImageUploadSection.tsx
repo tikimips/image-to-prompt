@@ -34,7 +34,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
 
   // Check if camera/media capture is supported
   React.useEffect(() => {
-    // Check if we're running in a secure context (HTTPS or localhost)
     const isSecureContext = window.isSecureContext || window.location.hostname === 'localhost';
     setCameraSupported(isSecureContext);
   }, []);
@@ -46,7 +45,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
       const img = new Image();
       
       img.onload = () => {
-        // Calculate new dimensions to keep aspect ratio - more aggressive sizing
         const maxWidth = 800;
         const maxHeight = 800;
         let { width, height } = img;
@@ -66,14 +64,11 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
         canvas.width = width;
         canvas.height = height;
         
-        // Draw and compress
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Start with lower quality for better compression
         let compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        let compressedSize = Math.round((compressedDataUrl.length * 3) / 4); // Approximate base64 to bytes
+        let compressedSize = Math.round((compressedDataUrl.length * 3) / 4);
         
-        // Progressively reduce quality until we get under 300KB
         let quality = 0.7;
         while (compressedSize > 300000 && quality > 0.3) {
           quality -= 0.1;
@@ -81,7 +76,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
           compressedSize = Math.round((compressedDataUrl.length * 3) / 4);
         }
         
-        // Final fallback - very aggressive compression
         if (compressedSize > 300000) {
           compressedDataUrl = canvas.toDataURL('image/jpeg', 0.3);
         }
@@ -96,26 +90,21 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
 
   const processImageFile = async (file: File) => {
     try {
-      // Show loading state
       setIsGenerating(true);
       
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please select a valid image file.');
         return;
       }
       
-      // Check file size
       const fileSizeMB = file.size / (1024 * 1024);
       if (fileSizeMB > 10) {
         toast.error('File size too large. Please select an image smaller than 10MB.');
         return;
       }
       
-      // Compress the image
       const compressedImage = await compressImage(file);
       
-      // Check compressed size
       const compressedSizeKB = Math.round((compressedImage.length * 3) / 4) / 1024;
       if (compressedSizeKB > 300) {
         toast.warning('Large image detected, storage may be affected');
@@ -140,7 +129,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
     if (file) {
       await processImageFile(file);
     }
-    // Reset the input value to allow selecting the same file again
     event.target.value = '';
   };
 
@@ -150,7 +138,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
       return;
     }
     
-    // Reset camera input to ensure it triggers correctly
     if (cameraInputRef.current) {
       cameraInputRef.current.value = '';
       try {
@@ -163,14 +150,12 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
   };
 
   const handleUploadClick = () => {
-    // Reset file input to ensure it triggers correctly
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
       fileInputRef.current.click();
     }
   };
 
-  // Drag and drop handlers
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -180,7 +165,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only set dragOver to false if we're leaving the drop zone entirely
     if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
     }
@@ -218,62 +202,35 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
       return;
     }
     
-    console.log('Starting prompt generation...');
-    console.log('Image URL length:', selectedImage.length);
-    console.log('Image starts with:', selectedImage.substring(0, 50));
-    console.log('OpenAI configured:', openAIService.isConfigured());
-    console.log('Should skip API:', openAIService.shouldSkipApi());
-    
     setIsGenerating(true);
     
     try {
       let result: OpenAIAnalysisResult;
       
       if (openAIService.isConfigured() && !openAIService.shouldSkipApi()) {
-        // Use real OpenAI Vision API
         try {
-          console.log('Attempting OpenAI API call with image size:', Math.round((selectedImage.length * 3) / 4) / 1024, 'KB');
           result = await openAIService.analyzeImage(selectedImage);
           toast.success('Image analyzed with OpenAI Vision API!');
-          console.log('Successfully generated prompt:', result.prompt);
-          // Clear any previous errors on success
           openAIService.clearError();
         } catch (apiError) {
-          // Don't log quota errors as much since they're expected
-          if (!(apiError instanceof Error && apiError.message.includes('QUOTA_EXCEEDED'))) {
-            console.error('OpenAI API failed, switching to demo mode:', apiError);
-          }
-          
-          // Handle specific quota exceeded error more gracefully
           if (apiError instanceof Error && apiError.message.includes('QUOTA_EXCEEDED')) {
-            // Only show quota warning once or twice, not repeatedly
             const quotaWarningKey = 'quota_warning_shown';
             const lastShown = localStorage.getItem(quotaWarningKey);
             const now = Date.now();
             
-            if (!lastShown || (now - parseInt(lastShown)) > 300000) { // Show warning max once per 5 minutes
+            if (!lastShown || (now - parseInt(lastShown)) > 300000) {
               toast.warning('OpenAI API quota exceeded. Switching to demo mode.');
               toast.info('💡 Add credits to your OpenAI account to re-enable AI analysis.');
               localStorage.setItem(quotaWarningKey, now.toString());
             }
-          } else if (apiError instanceof Error && apiError.message.includes('Invalid image format')) {
-            toast.error('Image format not supported. Using demo mode.');
-          } else if (apiError instanceof Error && apiError.message.includes('too large')) {
-            toast.error('Image too large. Please try a smaller image or use demo mode.');
           } else {
-            console.error('Unexpected OpenAI API error:', apiError);
             toast.warning('OpenAI API temporarily unavailable. Using demo mode.');
           }
           
-          result = await openAIService.generateMockPrompt(selectedImage);
+          result = await openAIService.generateMockPrompt();
         }
-      } else if (openAIService.shouldSkipApi()) {
-        // Skip API calls when quota is exceeded
-        result = await openAIService.generateMockPrompt(selectedImage);
-        toast.info('Using demo mode (API quota exceeded).');
       } else {
-        // Use mock data when API key is not configured
-        result = await openAIService.generateMockPrompt(selectedImage);
+        result = await openAIService.generateMockPrompt();
         toast.info('Using demo mode. Configure OpenAI API key for real analysis.');
       }
       
@@ -281,7 +238,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
       setGeneratedPrompt(result.prompt);
       setDetectedStyle(result.style);
       
-      // Add to history
       onQuery({
         prompt: result.prompt,
         imageUrl: selectedImage,
@@ -293,35 +249,9 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
     } catch (error) {
       console.error('Error generating prompt:', error);
       toast.error('Failed to generate prompt. Please try again.');
-      
-      // Last resort fallback - ensure we always have something
-      try {
-        const fallbackResult = await openAIService.generateMockPrompt(selectedImage);
-        setAnalysisResult(fallbackResult);
-        setGeneratedPrompt(fallbackResult.prompt);
-        setDetectedStyle(fallbackResult.style);
-        
-        onQuery({
-          prompt: fallbackResult.prompt,
-          imageUrl: selectedImage,
-          style: fallbackResult.style,
-          createdAt: new Date().toISOString(),
-          confidence: fallbackResult.confidence
-        });
-        
-        toast.info('Using backup demo prompt.');
-      } catch (fallbackError) {
-        console.error('Even fallback failed:', fallbackError);
-        toast.error('Complete system failure. Please refresh the page.');
-      }
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const clearApiError = () => {
-    openAIService.clearError();
-    toast.success('API status cleared. You can try again now.');
   };
 
   const handleSave = () => {
@@ -370,108 +300,43 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
     if (success) {
       toast.success('Prompt copied to clipboard!');
     } else {
-      // Show a user-friendly modal for manual copying
       showTextForManualCopy(generatedPrompt, 'Copy Generated Prompt');
       toast.info('Please copy the text manually from the dialog.');
     }
   };
 
-  const sharePrompt = async () => {
-    if (!generatedPrompt) {
-      toast.error('No prompt to share!');
-      return;
-    }
-
-    // Check if the Web Share API is supported and available
+  const sharePrompt = () => {
     if (navigator.share) {
-      try {
-        // Prepare share data - start with simple data that's widely supported
-        const shareData = {
-          title: 'AI Generated Image Prompt',
-          text: generatedPrompt,
-        };
-
-        // Only add URL if canShare method exists and supports it
-        if (navigator.canShare) {
-          const extendedData = {
-            ...shareData,
-            text: `Check out this AI image prompt I just generated:\n\n"${generatedPrompt}"\n\n${detectedStyle && detectedStyle !== 'unknown' ? `Style: ${detectedStyle}\n\n` : ''}Generated using Image to Prompt AI`,
-            url: window.location.href
-          };
-          
-          if (navigator.canShare(extendedData)) {
-            await navigator.share(extendedData);
-          } else {
-            await navigator.share(shareData);
-          }
-        } else {
-          // Older browsers - use simple data
-          await navigator.share(shareData);
-        }
-        
-        toast.success('Prompt shared successfully!');
-      } catch (error) {
-        // Handle different types of share errors
-        if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            // User cancelled - don't show error
-            return;
-          } else if (error.name === 'NotAllowedError') {
-            toast.info('Share permission not granted. Copying to clipboard instead.');
-          } else {
-            console.warn('Share failed:', error);
-            toast.info('Share failed. Copying to clipboard instead.');
-          }
-        }
-        // Fallback to clipboard
-        handleCopyToClipboard();
-      }
+      navigator.share({
+        title: 'Generated AI Prompt',
+        text: generatedPrompt,
+      });
     } else {
-      // Web Share API not supported - fallback to clipboard
-      toast.info('System share not available, copying to clipboard instead');
       handleCopyToClipboard();
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* API Configuration Info */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <span>
             {openAIService.isConfigured() 
-              ? (openAIService.hasQuotaError() 
-                ? (openAIService.shouldSkipApi() 
-                  ? "⏸️ OpenAI API quota exceeded - Cooldown mode (demo only)"
-                  : "⚠️ OpenAI API quota exceeded - Demo mode active")
-                : "✅ OpenAI Vision API ready - Real AI analysis enabled")
+              ? "✅ OpenAI Vision API ready - Real AI analysis enabled"
               : "🔧 Demo mode - Configure OpenAI API key for real analysis"
             }
           </span>
-          <div className="flex gap-1">
-            {openAIService.hasQuotaError() && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearApiError}
-                title="Clear API error and try again"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowApiInfo(true)}
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowApiInfo(true)}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </AlertDescription>
       </Alert>
 
-      {/* API Setup Dialog */}
       <Dialog open={showApiInfo} onOpenChange={setShowApiInfo}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -486,51 +351,14 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
               <ol className="list-decimal list-inside space-y-2 text-sm">
                 <li>Sign up for an OpenAI account at <a href="https://platform.openai.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">platform.openai.com</a></li>
                 <li>Generate an API key from your dashboard</li>
-                <li>Open <code className="bg-gray-200 px-1 rounded">/services/openai.ts</code></li>
-                <li>Replace <code className="bg-gray-200 px-1 rounded">"YOUR_OPENAI_API_KEY_HERE"</code> with your actual API key</li>
-                <li>For production, use environment variables instead of hardcoding</li>
+                <li>Add environment variable: <code className="bg-gray-200 px-1 rounded">VITE_OPENAI_API_KEY</code></li>
+                <li>Redeploy your application</li>
               </ol>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-sm">
-                <strong>Note:</strong> OpenAI Vision API usage incurs costs. Check OpenAI's pricing page for current rates.
-                Without an API key, the app will use demo prompts for testing purposes.
-              </p>
-            </div>
-            <div className="bg-red-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2 text-red-800">If you see "quota exceeded" errors:</h4>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-red-700">
-                <li>Visit <a href="https://platform.openai.com/account/billing" target="_blank" rel="noopener noreferrer" className="text-red-600 underline">your OpenAI billing page</a></li>
-                <li>Add credits to your account or upgrade your plan</li>
-                <li>The app will automatically fall back to demo mode when quota is exceeded</li>
-              </ol>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Debug & Test:</h4>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={async () => {
-                  try {
-                    const isWorking = await openAIService.testApiConnection();
-                    if (isWorking) {
-                      toast.success('✅ OpenAI API connection successful!');
-                    } else {
-                      toast.error('❌ OpenAI API connection failed');
-                    }
-                  } catch (error) {
-                    toast.error('❌ API test failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
-                  }
-                }}
-              >
-                Test API Connection
-              </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Camera Support Warning */}
       {!cameraSupported && (
         <Alert>
           <Camera className="h-4 w-4" />
@@ -545,7 +373,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
           <CardTitle>Upload or Drop Image</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Drag and Drop Zone */}
           <div
             ref={dropZoneRef}
             onDragEnter={handleDragEnter}
@@ -592,13 +419,8 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
                 </p>
               </div>
             </div>
-            
-            {isDragOver && (
-              <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-lg pointer-events-none"></div>
-            )}
           </div>
 
-          {/* Alternative Upload Methods */}
           <div className="flex gap-4">
             <Button
               onClick={handleUploadClick}
@@ -613,7 +435,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
               variant="outline"
               className="flex-1"
               disabled={!cameraSupported}
-              title={!cameraSupported ? "Camera requires HTTPS or localhost" : "Take a photo with your device camera"}
             >
               <Camera className="h-4 w-4 mr-2" />
               Take Photo
@@ -626,7 +447,6 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
             accept="image/*"
             onChange={handleFileUpload}
             className="hidden"
-            id="file-input"
           />
           <input
             ref={cameraInputRef}
@@ -635,16 +455,15 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
             capture="environment"
             onChange={handleFileUpload}
             className="hidden"
-            id="camera-input"
           />
 
           {selectedImage && (
             <div className="space-y-4">
-              <div className="relative w-full max-h-[300px] bg-gray-50 rounded-lg flex items-center justify-center">
+              <div className="relative">
                 <img
                   src={selectedImage}
                   alt="Selected"
-                  className="max-w-full max-h-[300px] object-contain rounded-lg"
+                  className="w-full h-64 object-cover rounded-lg"
                 />
               </div>
               
@@ -656,12 +475,12 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
                 {isGenerating ? (
                   <>
                     <Wand2 className="h-4 w-4 mr-2 animate-spin" />
-                    {openAIService.isConfigured() && !openAIService.shouldSkipApi() ? 'Analyzing with AI...' : 'Generating...'}
+                    {openAIService.isConfigured() ? 'Analyzing with AI...' : 'Generating...'}
                   </>
                 ) : (
                   <>
                     <Wand2 className="h-4 w-4 mr-2" />
-                    {openAIService.isConfigured() && !openAIService.shouldSkipApi() ? 'Analyze with AI' : 'Generate Demo Prompt'}
+                    {openAIService.isConfigured() ? 'Analyze with AI' : 'Generate Demo Prompt'}
                   </>
                 )}
               </Button>
@@ -730,18 +549,8 @@ export function ImageUploadSection({ onSave, onQuery }: ImageUploadSectionProps)
                         onChange={(e) => setPromptName(e.target.value)}
                         placeholder="Enter a name for your prompt"
                         autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSave();
-                          }
-                        }}
                       />
                     </div>
-                    {detectedStyle && (
-                      <div className="text-sm text-gray-600">
-                        Detected style: <span className="font-medium">{detectedStyle}</span>
-                      </div>
-                    )}
                     <div className="flex gap-2">
                       <Button onClick={handleSave} className="flex-1">
                         Save
