@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Copy, Share2, Clock, Save, ImageIcon, Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { QueryHistory as QueryHistoryType, SavedPrompt } from '../App';
 import { toast } from 'sonner';
-import { ImageWithFallback } from './figma/ImageWithFallback';
 import { openAIService, ImageGenerationResult } from '../services/openai';
 
 interface QueryHistoryProps {
@@ -217,7 +216,7 @@ export function QueryHistory({ queries, onSave, onSaveFromHistory }: QueryHistor
                   <div className="relative">
                     {generatedImage ? (
                       <div className="space-y-2">
-                        <ImageWithFallback
+                        <img
                           src={generatedImage.imageUrl}
                           alt="Generated image from prompt"
                           className="w-full h-64 object-cover rounded-lg"
