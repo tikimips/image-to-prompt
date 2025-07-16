@@ -311,14 +311,14 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <header className="text-center mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+            <div className="flex-1 text-center sm:text-left">
               <h1 className="text-3xl mb-2">Prompt Shop</h1>
               <p className="text-gray-600">AI-powered image analysis &amp; prompt generation</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Dialog open={showStorageDialog} onOpenChange={setShowStorageDialog}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="sm">
@@ -388,38 +388,53 @@ function MainApp() {
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="upload" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted rounded-lg">
+            <TabsTrigger 
+              value="upload" 
+              className="flex items-center justify-center gap-2 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            >
               <Camera className="h-4 w-4" />
-              Upload
+              <span className="hidden sm:inline">Upload</span>
             </TabsTrigger>
-            <TabsTrigger value="library" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="library" 
+              className="flex items-center justify-center gap-2 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            >
               <FileText className="h-4 w-4" />
-              Prompt Library
+              <span className="hidden sm:inline">Library</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="history" 
+              className="flex items-center justify-center gap-2 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            >
               <History className="h-4 w-4" />
-              History
+              <span className="hidden sm:inline">History</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="mt-6">
-            <ImageUploadSection onSave={savePrompt} onQuery={addToHistory} />
+            <div className="w-full">
+              <ImageUploadSection onSave={savePrompt} onQuery={addToHistory} />
+            </div>
           </TabsContent>
 
           <TabsContent value="library" className="mt-6">
-            <PromptLibrary 
-              prompts={savedPrompts} 
-              onDelete={deletePrompt}
-            />
+            <div className="w-full">
+              <PromptLibrary 
+                prompts={savedPrompts} 
+                onDelete={deletePrompt}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="history" className="mt-6">
-            <QueryHistoryComponent 
-              queries={queryHistory} 
-              onSave={savePrompt}
-              onSaveFromHistory={saveFromHistory}
-            />
+            <div className="w-full">
+              <QueryHistoryComponent 
+                queries={queryHistory} 
+                onSave={savePrompt}
+                onSaveFromHistory={saveFromHistory}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
