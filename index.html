@@ -2,45 +2,69 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Image to Prompt - AI-Powered Image Analysis</title>
+    <meta name="description" content="Prompt Shop - AI-powered image analysis and prompt generation tool. Upload images and generate creative prompts using OpenAI Vision API." />
+    <meta name="keywords" content="AI, image analysis, prompt generation, OpenAI, image to text, AI prompts, prompt shop" />
+    <meta name="author" content="Prompt Shop" />
     
-    <!-- Meta Description for SEO -->
-    <meta name="description" content="Transform your images into detailed AI prompts with advanced computer vision analysis. Upload images and generate creative prompts for AI art generation." />
-    <meta name="keywords" content="AI, image analysis, prompt generation, computer vision, AI art, image to text, OpenAI Vision" />
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Image to Prompt - AI-Powered Image Analysis" />
-    <meta property="og:description" content="Transform your images into detailed AI prompts with advanced computer vision analysis." />
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://your-domain.com" />
-    <meta property="og:image" content="https://your-domain.com/og-image.jpg" />
+    <meta property="og:url" content="https://promptshop.com/" />
+    <meta property="og:title" content="Prompt Shop - AI Image Analysis & Prompt Generation" />
+    <meta property="og:description" content="Generate AI prompts from your images using advanced computer vision technology" />
+    <meta property="og:image" content="https://promptshop.com/og-image.png" />
+    <meta property="og:site_name" content="Prompt Shop" />
     
-    <!-- Twitter Card Meta Tags -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Image to Prompt - AI-Powered Image Analysis" />
-    <meta name="twitter:description" content="Transform your images into detailed AI prompts with advanced computer vision analysis." />
-    <meta name="twitter:image" content="https://your-domain.com/og-image.jpg" />
+    <meta name="twitter:url" content="https://promptshop.com/" />
+    <meta name="twitter:title" content="Prompt Shop - AI Image Analysis & Prompt Generation" />
+    <meta name="twitter:description" content="Generate AI prompts from your images using advanced computer vision technology" />
+    <meta name="twitter:image" content="https://promptshop.com/og-image.png" />
     
-    <!-- Preconnect to external domains for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://api.openai.com" />
-    <link rel="preconnect" href="https://accounts.google.com" />
-    <link rel="preconnect" href="https://appleid.cdn-apple.com" />
+    <!-- PWA -->
+    <meta name="theme-color" content="#030213" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     
     <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/site.webmanifest" />
     
-    <!-- Theme color for mobile browsers -->
-    <meta name="theme-color" content="#2563eb" />
+    <!-- DNS Prefetch for better performance -->
+    <link rel="dns-prefetch" href="//api.openai.com" />
+    <link rel="dns-prefetch" href="//accounts.google.com" />
+    <link rel="dns-prefetch" href="//appleid.apple.com" />
     
-    <!-- Prevent zoom on iOS -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/styles/globals.css" as="style" />
+    
+    <title>Prompt Shop - AI Image Analysis & Prompt Generation</title>
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Prompt Shop",
+      "description": "AI-powered image analysis and prompt generation tool",
+      "url": "https://promptshop.com",
+      "applicationCategory": "Productivity",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "Prompt Shop"
+      },
+      "keywords": "AI, image analysis, prompt generation, OpenAI, computer vision",
+      "screenshot": "https://promptshop.com/og-image.png"
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
