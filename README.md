@@ -4,7 +4,7 @@ AI-powered image analysis and prompt generation tool. Upload images and generate
 
 ## 🌐 Live Application
 
-**Visit**: [https://promptshop.com](https://promptshop.com)
+**Visit**: [https://promptshop.ai](https://promptshop.ai)
 
 ## ✨ Features
 
@@ -123,10 +123,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **Issues**: Report bugs on GitHub Issues
 - **Documentation**: Check the docs/ folder
-- **Contact**: Visit [promptshop.com](https://promptshop.com)
+- **Contact**: Visit [promptshop.ai](https://promptshop.ai)
 
 ---
 
 **Made with ❤️ for the AI community**
 
-Visit **[promptshop.com](https://promptshop.com)** to try it out!
+Visit **[promptshop.ai](https://promptshop.ai)** to try it out!
