@@ -35,6 +35,7 @@
     "dist",
     "vite.config.ts",
     "tailwind.config.js",
-    "postcss.config.js"
+    "postcss.config.js",
+    "supabase/functions/server/**/*"
   ]
 }

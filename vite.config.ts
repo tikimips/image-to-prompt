@@ -15,6 +15,11 @@ export default defineConfig({
     minify: 'esbuild',
     // Optimize chunk size
     rollupOptions: {
+      // Exclude server files from the build
+      external: [
+        '/supabase/functions/server/index.tsx',
+        '/supabase/functions/server/kv_store.tsx'
+      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],

@@ -278,6 +278,15 @@ function MainApp() {
     return { promptsSize, historySize, totalSize };
   };
 
+  // Helper function to get user display name
+  const getUserDisplayName = (user: any) => {
+    if (!user) return 'User';
+    return user.user_metadata?.full_name || 
+           user.user_metadata?.name || 
+           user.email?.split('@')[0] || 
+           'User';
+  };
+
   // Show loading state
   if (isLoading) {
     return (
@@ -306,8 +315,8 @@ function MainApp() {
         <header className="text-center mb-8">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <h1 className="text-3xl mb-2">Image to Prompt</h1>
-              <p className="text-gray-600">Generate AI prompts from your images</p>
+              <h1 className="text-3xl mb-2">Prompt Shop</h1>
+              <p className="text-gray-600">AI-powered image analysis &amp; prompt generation</p>
             </div>
             <div className="flex items-center gap-2">
               <Dialog open={showStorageDialog} onOpenChange={setShowStorageDialog}>
@@ -372,7 +381,7 @@ function MainApp() {
           {user && (
             <div className="mb-4">
               <p className="text-sm text-gray-600">
-                Welcome back, <span className="font-medium">{user.name}</span>!
+                Welcome back, <span className="font-medium">{getUserDisplayName(user)}</span>!
               </p>
             </div>
           )}
