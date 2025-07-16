@@ -311,21 +311,22 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <header className="text-center mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
-            <div className="flex-1 text-center sm:text-left">
-              <h1 className="text-3xl mb-2">Prompt Shop</h1>
-              <p className="text-gray-600">AI-powered image analysis &amp; prompt generation</p>
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6">
+            <div className="text-center lg:text-left">
+              <h1 className="text-3xl lg:text-4xl mb-2">Prompt Shop</h1>
+              <p className="text-gray-600 text-base lg:text-lg">AI-powered image analysis &amp; prompt generation</p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-3 flex-shrink-0">
               <Dialog open={showStorageDialog} onOpenChange={setShowStorageDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="h-9 w-9">
                     <Settings className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>Storage Management</DialogTitle>
                     <DialogDescription>
@@ -335,7 +336,7 @@ function MainApp() {
                   <div className="space-y-4">
                     <Alert>
                       <AlertDescription>
-                        <div className="space-y-2">
+                        <div className="space-y-2 text-sm">
                           <p><strong>Storage Usage:</strong></p>
                           <p>• Saved Prompts: {getStorageInfo().promptsSize} KB ({savedPrompts.length} items)</p>
                           <p>• Query History: {getStorageInfo().historySize} KB ({queryHistory.length} items)</p>
@@ -349,6 +350,7 @@ function MainApp() {
                         onClick={clearHistory}
                         variant="outline"
                         className="w-full justify-start"
+                        size="sm"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Clear History Only ({queryHistory.length} items)
@@ -358,6 +360,7 @@ function MainApp() {
                         onClick={clearAllData}
                         variant="destructive"
                         className="w-full justify-start"
+                        size="sm"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Clear All Data (History + Saved Prompts)
@@ -365,7 +368,7 @@ function MainApp() {
                     </div>
                     
                     <Alert>
-                      <AlertDescription className="text-sm">
+                      <AlertDescription className="text-xs">
                         <strong>Note:</strong> If you're experiencing storage errors, try clearing history first. 
                         Images take up the most space, so reducing the number of saved items helps prevent quota issues.
                       </AlertDescription>
@@ -379,7 +382,7 @@ function MainApp() {
           
           {/* Welcome message */}
           {user && (
-            <div className="mb-4">
+            <div className="text-center lg:text-left mb-4">
               <p className="text-sm text-gray-600">
                 Welcome back, <span className="font-medium">{getUserDisplayName(user)}</span>!
               </p>
@@ -387,55 +390,62 @@ function MainApp() {
           )}
         </header>
 
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-gray-100 rounded-lg mb-6">
             <TabsTrigger 
               value="upload" 
-              className="flex items-center justify-center gap-2 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all rounded-md"
             >
               <Camera className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>
+              <span className="sm:hidden">Upload</span>
             </TabsTrigger>
             <TabsTrigger 
               value="library" 
-              className="flex items-center justify-center gap-2 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all rounded-md"
             >
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Library</span>
+              <span className="sm:hidden">Library</span>
             </TabsTrigger>
             <TabsTrigger 
               value="history" 
-              className="flex items-center justify-center gap-2 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all rounded-md"
             >
               <History className="h-4 w-4" />
               <span className="hidden sm:inline">History</span>
+              <span className="sm:hidden">History</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upload" className="mt-6">
-            <div className="w-full">
-              <ImageUploadSection onSave={savePrompt} onQuery={addToHistory} />
-            </div>
-          </TabsContent>
+          {/* Tab Content */}
+          <div className="w-full">
+            <TabsContent value="upload" className="mt-0">
+              <div className="w-full">
+                <ImageUploadSection onSave={savePrompt} onQuery={addToHistory} />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="library" className="mt-6">
-            <div className="w-full">
-              <PromptLibrary 
-                prompts={savedPrompts} 
-                onDelete={deletePrompt}
-              />
-            </div>
-          </TabsContent>
+            <TabsContent value="library" className="mt-0">
+              <div className="w-full">
+                <PromptLibrary 
+                  prompts={savedPrompts} 
+                  onDelete={deletePrompt}
+                />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="history" className="mt-6">
-            <div className="w-full">
-              <QueryHistoryComponent 
-                queries={queryHistory} 
-                onSave={savePrompt}
-                onSaveFromHistory={saveFromHistory}
-              />
-            </div>
-          </TabsContent>
+            <TabsContent value="history" className="mt-0">
+              <div className="w-full">
+                <QueryHistoryComponent 
+                  queries={queryHistory} 
+                  onSave={savePrompt}
+                  onSaveFromHistory={saveFromHistory}
+                />
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
       
