@@ -204,70 +204,102 @@
   }
 }
 
-/* Desktop-specific optimizations */
+/* Desktop-optimized layout */
 @media (min-width: 1024px) {
-  .desktop-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.25rem;
+  /* Larger heading on desktop */
+  h1 {
+    font-size: 2.25rem !important;
   }
   
-  .desktop-tab {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    transition: all 0.15s ease-in-out;
+  /* Better spacing for desktop */
+  .desktop-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
   }
   
-  .desktop-tab[data-state="active"] {
-    background-color: var(--background);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  /* Enhanced tab styling for desktop */
+  [data-state="active"] {
+    background-color: white !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1) !important;
   }
 }
 
-/* Ensure tabs work properly on all devices */
+/* Enhanced tab styling */
 [role="tablist"] {
-  display: flex;
-  width: 100%;
-  background-color: var(--muted);
-  border-radius: 0.5rem;
-  padding: 0.25rem;
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  width: 100% !important;
+  background-color: #f3f4f6 !important;
+  border-radius: 0.5rem !important;
+  padding: 0.25rem !important;
+  gap: 0 !important;
+  height: 3rem !important;
 }
 
 [role="tab"] {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--muted-foreground);
-  border-radius: 0.375rem;
-  transition: all 0.15s ease-in-out;
-  cursor: pointer;
-  border: none;
-  background: none;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  border-radius: 0.375rem !important;
+  transition: all 0.15s ease-in-out !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: transparent !important;
+  min-height: 2.5rem !important;
 }
 
 [role="tab"]:hover {
-  color: var(--foreground);
+  color: #374151 !important;
+  background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 [role="tab"][data-state="active"] {
-  background-color: var(--background);
-  color: var(--foreground);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background-color: white !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Fix for potential layout issues */
+/* Ensure text is always visible */
+[role="tab"] span {
+  display: inline !important;
+}
+
+@media (max-width: 640px) {
+  [role="tab"] {
+    padding: 0.5rem 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Fix tab content spacing */
+[role="tabpanel"] {
+  width: 100% !important;
+  margin-top: 0 !important;
+}
+
+/* Prevent layout shifts */
 .tab-content {
   width: 100%;
-  margin-top: 1.5rem;
+  min-height: 200px;
 }
 
-.tab-content > * {
-  max-width: 100%;
+/* Better responsive header */
+@media (min-width: 1024px) {
+  .header-desktop {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 2rem !important;
+  }
+  
+  .header-desktop h1 {
+    font-size: 2.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
 }
