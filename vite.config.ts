@@ -11,19 +11,12 @@ export default defineConfig({
     },
   },
   build: {
-    // Use esbuild for minification instead of terser
     minify: 'esbuild',
-    // Optimize chunk size
     rollupOptions: {
-      // Exclude server files from the build
-      external: [
-        '/supabase/functions/server/index.tsx',
-        '/supabase/functions/server/kv_store.tsx'
-      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['lucide-react', 'sonner']
+          ui: ['lucide-react']
         }
       }
     }

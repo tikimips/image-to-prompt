@@ -18,14 +18,29 @@
     "types": ["vite/client"]
   },
   "include": [
-    "src",
-    "*.tsx",
-    "*.ts",
+    "App.tsx",
+    "main.tsx",
     "vite-env.d.ts",
     "components/**/*",
     "contexts/**/*",
     "utils/**/*",
-    "services/**/*"
+    "services/**/*",
+    "styles/**/*"
   ],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "*.config.ts",
+    "*.config.js",
+    "vite.config.ts",
+    "tailwind.config.js",
+    "postcss.config.js",
+    "**/*.md",
+    "**/*.js",
+    "deploy.sh",
+    "cleanup-*.js",
+    "setup-*.js",
+    "open-*.js"
+  ]
 }
