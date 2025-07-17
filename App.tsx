@@ -8,12 +8,12 @@ import { LoginPage } from './components/LoginPage';
 import { UserProfile } from './components/UserProfile';
 import { ConfigChecker } from './components/ConfigChecker';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Camera, FileText, History, Settings, Trash2 } from 'lucide-react';
+import { Camera, FileText, History, Eye, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from './components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
-import { Alert, AlertDescription } from './components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
+import { Badge } from './components/ui/badge';
 
+// Simple interfaces for now
 export interface SavedPrompt {
   id: string;
   name: string;
@@ -32,250 +32,83 @@ export interface QueryHistory {
   confidence?: number;
 }
 
-// Storage utility functions with size management
-const getStorageSize = (key: string): number => {
-  const item = localStorage.getItem(key);
-  return item ? new Blob([item]).size : 0;
-};
-
-const getTotalStorageSize = (): number => {
-  let total = 0;
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key) {
-      total += getStorageSize(key);
-    }
-  }
-  return total;
-};
-
-const compressImageData = (imageUrl: string): string => {
-  // For base64 images, we can't compress much, but we can limit size
-  if (imageUrl.startsWith('data:image/')) {
-    // If image is too large (>100KB), show warning but only once per session
-    const sizeInBytes = imageUrl.length * 0.75; // Rough base64 size estimation
-    if (sizeInBytes > 100000) {
-      console.warn('Large image detected, may affect storage');
-      // Only show toast warning occasionally to avoid spam
-      if (Math.random() < 0.3) {
-        toast.warning('Large image detected');
-      }
-    }
-  }
-  return imageUrl;
-};
-
-const safeSetItem = (key: string, value: string): boolean => {
-  try {
-    // Check if we're approaching storage limits (aim for under 2MB total)
-    const currentSize = getTotalStorageSize();
-    const newItemSize = new Blob([value]).size;
-    
-    if (currentSize + newItemSize > 2 * 1024 * 1024) {
-      console.log('Storage quota exceeded, attempting cleanup...');
-      toast.warning('Storage getting full, cleaning up old data...');
-      cleanupOldData();
-    }
-    
-    localStorage.setItem(key, value);
-    return true;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      console.error('Storage quota exceeded, attempting cleanup...');
-      toast.error('Storage quota exceeded, attempting cleanup...');
-      cleanupOldData();
-      try {
-        localStorage.setItem(key, value);
-        toast.success('Storage cleaned up successfully');
-        return true;
-      } catch (retryError) {
-        console.error('Storage still full after cleanup');
-        toast.error('Storage still full after cleanup. Please clear some data manually.');
-        return false;
-      }
-    }
-    console.error('Storage error:', error);
-    toast.error('Storage error occurred');
-    return false;
-  }
-};
-
-const cleanupOldData = () => {
-  try {
-    // Clean up old query history first (keep only 15 most recent)
-    const storedHistory = localStorage.getItem('queryHistory');
-    if (storedHistory) {
-      const history = JSON.parse(storedHistory);
-      if (Array.isArray(history) && history.length > 15) {
-        const trimmed = history.slice(0, 15);
-        localStorage.setItem('queryHistory', JSON.stringify(trimmed));
-        console.log(`Trimmed history from ${history.length} to ${trimmed.length} items`);
-      }
-    }
-    
-    // Clean up old saved prompts if there are too many (keep only 30 most recent)
-    const storedPrompts = localStorage.getItem('savedPrompts');
-    if (storedPrompts) {
-      const prompts = JSON.parse(storedPrompts);
-      if (Array.isArray(prompts) && prompts.length > 30) {
-        const sorted = prompts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        const trimmed = sorted.slice(0, 30);
-        localStorage.setItem('savedPrompts', JSON.stringify(trimmed));
-        console.log(`Trimmed prompts from ${prompts.length} to ${trimmed.length} items`);
-      }
-    }
-    
-    console.log('Cleanup completed');
-  } catch (error) {
-    console.error('Cleanup failed:', error);
-  }
-};
-
 function MainApp() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [savedPrompts, setSavedPrompts] = useState<SavedPrompt[]>([]);
   const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([]);
   const [activeTab, setActiveTab] = useState('upload');
-  const [showStorageDialog, setShowStorageDialog] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewPrompt, setPreviewPrompt] = useState<string | null>(null);
+  const [previewStyle, setPreviewStyle] = useState<string | null>(null);
 
+  // Load data from localStorage for now
   useEffect(() => {
     if (isAuthenticated) {
-      try {
-        const stored = localStorage.getItem('savedPrompts');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setSavedPrompts(Array.isArray(parsed) ? parsed : []);
+      // Load saved prompts from localStorage
+      const savedPromptsData = localStorage.getItem('savedPrompts');
+      if (savedPromptsData) {
+        try {
+          const prompts = JSON.parse(savedPromptsData);
+          setSavedPrompts(prompts);
+        } catch (error) {
+          console.error('Error loading saved prompts:', error);
         }
-        
-        const storedHistory = localStorage.getItem('queryHistory');
-        if (storedHistory) {
-          const parsed = JSON.parse(storedHistory);
-          setQueryHistory(Array.isArray(parsed) ? parsed : []);
+      }
+
+      // Load query history from localStorage
+      const queryHistoryData = localStorage.getItem('queryHistory');
+      if (queryHistoryData) {
+        try {
+          const queries = JSON.parse(queryHistoryData);
+          setQueryHistory(queries);
+        } catch (error) {
+          console.error('Error loading query history:', error);
         }
-      } catch (error) {
-        console.error('Error loading from localStorage:', error);
-        toast.error('Error loading saved data. Starting fresh.');
       }
     }
   }, [isAuthenticated]);
 
   const savePrompt = (prompt: SavedPrompt) => {
-    try {
-      // Compress image data before saving
-      const optimizedPrompt = {
-        ...prompt,
-        imageUrl: compressImageData(prompt.imageUrl)
-      };
-      
-      const updated = [...savedPrompts, optimizedPrompt];
-      setSavedPrompts(updated);
-      
-      if (!safeSetItem('savedPrompts', JSON.stringify(updated))) {
-        toast.error('Failed to save prompt. Storage may be full.');
-      }
-    } catch (error) {
-      console.error('Error saving prompt:', error);
-      toast.error('Failed to save prompt.');
-    }
+    const updatedPrompts = [prompt, ...savedPrompts];
+    setSavedPrompts(updatedPrompts);
+    localStorage.setItem('savedPrompts', JSON.stringify(updatedPrompts));
+    toast.success('Prompt saved successfully!');
   };
 
   const addToHistory = (query: Omit<QueryHistory, 'id'>) => {
-    try {
-      const newQuery: QueryHistory = {
-        ...query,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        imageUrl: compressImageData(query.imageUrl)
-      };
-      
-      const updated = [newQuery, ...queryHistory].slice(0, 20); // Keep only last 20
-      setQueryHistory(updated);
-      
-      if (!safeSetItem('queryHistory', JSON.stringify(updated))) {
-        toast.error('Failed to save to history. Storage may be full.');
-      }
-    } catch (error) {
-      console.error('Error adding to history:', error);
-      toast.error('Failed to save to history.');
-    }
+    const newQuery = {
+      ...query,
+      id: Date.now().toString()
+    };
+    const updatedHistory = [newQuery, ...queryHistory.slice(0, 19)]; // Keep only last 20
+    setQueryHistory(updatedHistory);
+    localStorage.setItem('queryHistory', JSON.stringify(updatedHistory));
   };
 
   const deletePrompt = (id: string) => {
-    try {
-      const updated = savedPrompts.filter(p => p.id !== id);
-      setSavedPrompts(updated);
-      
-      if (!safeSetItem('savedPrompts', JSON.stringify(updated))) {
-        toast.error('Failed to update saved prompts.');
-      } else {
-        toast.success('Prompt deleted successfully!');
-      }
-    } catch (error) {
-      console.error('Error deleting prompt:', error);
-      toast.error('Failed to delete prompt.');
-    }
+    const updatedPrompts = savedPrompts.filter(p => p.id !== id);
+    setSavedPrompts(updatedPrompts);
+    localStorage.setItem('savedPrompts', JSON.stringify(updatedPrompts));
+    toast.success('Prompt deleted successfully!');
   };
 
   const removeFromHistory = (id: string) => {
-    try {
-      const updated = queryHistory.filter(q => q.id !== id);
-      setQueryHistory(updated);
-      
-      if (!safeSetItem('queryHistory', JSON.stringify(updated))) {
-        toast.error('Failed to update history.');
-      }
-    } catch (error) {
-      console.error('Error removing from history:', error);
-      toast.error('Failed to remove from history.');
-    }
+    const updatedHistory = queryHistory.filter(q => q.id !== id);
+    setQueryHistory(updatedHistory);
+    localStorage.setItem('queryHistory', JSON.stringify(updatedHistory));
+    toast.success('Item removed from history!');
   };
 
   const saveFromHistory = (prompt: SavedPrompt, queryId: string) => {
-    try {
-      // Save to prompt library
-      savePrompt(prompt);
-      // Remove from history
-      removeFromHistory(queryId);
-      toast.success('Query saved to library and removed from history!');
-    } catch (error) {
-      console.error('Error saving from history:', error);
-      toast.error('Failed to save query.');
-    }
+    savePrompt(prompt);
+    removeFromHistory(queryId);
+    toast.success('Query saved to library and removed from history!');
   };
 
-  const clearAllData = () => {
-    try {
-      localStorage.removeItem('savedPrompts');
-      localStorage.removeItem('queryHistory');
-      setSavedPrompts([]);
-      setQueryHistory([]);
-      setShowStorageDialog(false);
-      toast.success('All data cleared successfully!');
-    } catch (error) {
-      console.error('Error clearing data:', error);
-      toast.error('Failed to clear data.');
-    }
-  };
-
-  const clearHistory = () => {
-    try {
-      localStorage.removeItem('queryHistory');
-      setQueryHistory([]);
-      setShowStorageDialog(false);
-      toast.success('History cleared successfully!');
-    } catch (error) {
-      console.error('Error clearing history:', error);
-      toast.error('Failed to clear history.');
-    }
-  };
-
-  const getStorageInfo = () => {
-    const prompts = localStorage.getItem('savedPrompts');
-    const history = localStorage.getItem('queryHistory');
-    const promptsSize = prompts ? (new Blob([prompts]).size / 1024).toFixed(1) : '0';
-    const historySize = history ? (new Blob([history]).size / 1024).toFixed(1) : '0';
-    const totalSize = ((getTotalStorageSize()) / 1024).toFixed(1);
-    
-    return { promptsSize, historySize, totalSize };
+  const updatePreview = (imageUrl: string, prompt: string, style: string) => {
+    setPreviewImage(imageUrl);
+    setPreviewPrompt(prompt);
+    setPreviewStyle(style);
   };
 
   // Helper function to get user display name
@@ -290,10 +123,10 @@ function MainApp() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-600">Loading...</p>
+          <div className="w-12 h-12 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-slate-600">Loading your workspace...</p>
         </div>
       </div>
     );
@@ -310,146 +143,146 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Header */}
-        <header className="mb-8">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-4 mb-6">
-            <div className="text-center lg:text-left">
-              <h1 className="text-3xl lg:text-4xl mb-2">Prompt Shop</h1>
-              <p className="text-gray-600 text-base lg:text-lg">AI-powered image analysis &amp; prompt generation</p>
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <Dialog open={showStorageDialog} onOpenChange={setShowStorageDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Storage Management</DialogTitle>
-                    <DialogDescription>
-                      Manage your stored data and free up space if needed.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <Alert>
-                      <AlertDescription>
-                        <div className="space-y-2 text-sm">
-                          <p><strong>Storage Usage:</strong></p>
-                          <p>• Saved Prompts: {getStorageInfo().promptsSize} KB ({savedPrompts.length} items)</p>
-                          <p>• Query History: {getStorageInfo().historySize} KB ({queryHistory.length} items)</p>
-                          <p>• Total Storage: {getStorageInfo().totalSize} KB</p>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <div className="space-y-2">
-                      <Button
-                        onClick={clearHistory}
-                        variant="outline"
-                        className="w-full justify-start"
-                        size="sm"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Clear History Only ({queryHistory.length} items)
-                      </Button>
-                      
-                      <Button
-                        onClick={clearAllData}
-                        variant="destructive"
-                        className="w-full justify-start"
-                        size="sm"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Clear All Data (History + Saved Prompts)
-                      </Button>
-                    </div>
-                    
-                    <Alert>
-                      <AlertDescription className="text-xs">
-                        <strong>Note:</strong> If you're experiencing storage errors, try clearing history first. 
-                        Images take up the most space, so reducing the number of saved items helps prevent quota issues.
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <UserProfile />
-            </div>
-          </div>
-          
-          {/* Welcome message */}
-          {user && (
-            <div className="text-center lg:text-left mb-4">
-              <p className="text-sm text-gray-600">
-                Welcome back, <span className="font-medium">{getUserDisplayName(user)}</span>!
-              </p>
-            </div>
-          )}
-        </header>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-gray-100 rounded-lg mb-6">
-            <TabsTrigger 
-              value="upload" 
-              className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all rounded-md"
-            >
-              <Camera className="h-4 w-4" />
-              <span className="hidden sm:inline">Upload</span>
-              <span className="sm:hidden">Upload</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="library" 
-              className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all rounded-md"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Library</span>
-              <span className="sm:hidden">Library</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="flex items-center justify-center gap-2 py-2 px-3 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all rounded-md"
-            >
-              <History className="h-4 w-4" />
-              <span className="hidden sm:inline">History</span>
-              <span className="sm:hidden">History</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Tab Content */}
-          <div className="w-full">
-            <TabsContent value="upload" className="mt-0">
-              <div className="w-full">
-                <ImageUploadSection onSave={savePrompt} onQuery={addToHistory} />
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+          <div className="text-center lg:text-left">
+            <div className="flex items-center gap-3 justify-center lg:justify-start mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
-            </TabsContent>
+              <div>
+                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Prompt Shop
+                </h1>
+              </div>
+            </div>
+            <p className="text-slate-600 text-lg">AI-powered image analysis &amp; prompt generation</p>
+            {/* Welcome message */}
+            {user && (
+              <div className="text-sm text-slate-500 mt-2 space-y-1">
+                <p className="flex items-center gap-2 justify-center lg:justify-start">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Welcome back, <span className="font-medium">{getUserDisplayName(user)}</span>!
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <UserProfile />
+          </div>
+        </div>
 
-            <TabsContent value="library" className="mt-0">
-              <div className="w-full">
+        {/* Main Content - Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Panel - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Navigation Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 h-14 p-1 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-sm">
+                <TabsTrigger value="upload">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Upload
+                </TabsTrigger>
+                <TabsTrigger value="library">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Library ({savedPrompts.length})
+                </TabsTrigger>
+                <TabsTrigger value="history">
+                  <History className="h-4 w-4 mr-2" />
+                  History ({queryHistory.length})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab Content */}
+              <TabsContent value="upload" className="mt-6">
+                <ImageUploadSection 
+                  onSave={savePrompt} 
+                  onQuery={addToHistory}
+                  onPreview={updatePreview}
+                />
+              </TabsContent>
+
+              <TabsContent value="library" className="mt-6">
                 <PromptLibrary 
                   prompts={savedPrompts} 
                   onDelete={deletePrompt}
+                  onPreview={updatePreview}
                 />
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="history" className="mt-0">
-              <div className="w-full">
+              <TabsContent value="history" className="mt-6">
                 <QueryHistoryComponent 
                   queries={queryHistory} 
                   onSave={savePrompt}
                   onSaveFromHistory={saveFromHistory}
+                  onPreview={updatePreview}
                 />
-              </div>
-            </TabsContent>
+              </TabsContent>
+            </Tabs>
           </div>
-        </Tabs>
+
+          {/* Right Panel - Preview */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-6 bg-white/80 backdrop-blur-sm border border-slate-200 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Eye className="h-5 w-5 text-blue-600" />
+                  Preview
+                </CardTitle>
+                <CardDescription>
+                  View selected image and prompt
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {previewImage ? (
+                  <>
+                    {/* Image Preview */}
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                      <img 
+                        src={previewImage} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    
+                    {/* Style Badge */}
+                    {previewStyle && (
+                      <div className="flex justify-center">
+                        <Badge 
+                          variant="secondary" 
+                          className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 border-blue-200"
+                        >
+                          {previewStyle}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Prompt Preview */}
+                    {previewPrompt && (
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm text-slate-700">Generated Prompt:</h4>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-600 max-h-48 overflow-y-auto">
+                          {previewPrompt}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-slate-500">
+                    <ImageIcon className="h-16 w-16 mx-auto mb-4 text-slate-300" />
+                    <p className="text-sm">No image selected</p>
+                    <p className="text-xs mt-1">Click on any image to preview it here</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
       
-      {/* Configuration Checker - Available on all pages */}
+      {/* Configuration Checker */}
       <ConfigChecker />
       
       <Toaster />
