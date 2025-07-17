@@ -107,15 +107,23 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+    background-attachment: fixed;
   }
 
-  /* Ensure proper layout on all screen sizes */
+  /* Container with proper responsive sizing */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  @media (min-width: 480px) {
+    .container {
+      max-width: 480px;
+    }
   }
 
   @media (min-width: 640px) {
@@ -204,102 +212,136 @@
   }
 }
 
-/* Desktop-optimized layout */
+/* Desktop-specific improvements */
 @media (min-width: 1024px) {
-  /* Larger heading on desktop */
   h1 {
-    font-size: 2.25rem !important;
+    font-size: 2.5rem !important;
   }
   
-  /* Better spacing for desktop */
-  .desktop-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-  
-  /* Enhanced tab styling for desktop */
-  [data-state="active"] {
-    background-color: white !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1) !important;
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 }
 
-/* Enhanced tab styling */
-[role="tablist"] {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  width: 100% !important;
-  background-color: #f3f4f6 !important;
-  border-radius: 0.5rem !important;
-  padding: 0.25rem !important;
-  gap: 0 !important;
-  height: 3rem !important;
+/* Card styling with glass effect */
+.card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-[role="tab"] {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.5rem !important;
-  padding: 0.5rem 0.75rem !important;
-  font-size: 0.875rem !important;
-  font-weight: 500 !important;
-  color: #6b7280 !important;
-  border-radius: 0.375rem !important;
-  transition: all 0.15s ease-in-out !important;
-  cursor: pointer !important;
-  border: none !important;
-  background: transparent !important;
-  min-height: 2.5rem !important;
+/* Smooth transitions for all elements - but exclude tabs to prevent conflicts */
+*:not([data-radix-collection-item]):not([role="tab"]) {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
 }
 
-[role="tab"]:hover {
-  color: #374151 !important;
-  background-color: rgba(255, 255, 255, 0.5) !important;
+/* Gradient text effects */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-[role="tab"][data-state="active"] {
-  background-color: white !important;
-  color: #111827 !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+/* Loading spinner enhancement */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Ensure text is always visible */
-[role="tab"] span {
-  display: inline !important;
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
-@media (max-width: 640px) {
-  [role="tab"] {
-    padding: 0.5rem 0.25rem !important;
-    font-size: 0.75rem !important;
-  }
+/* Subtle animations for better UX */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Fix tab content spacing */
-[role="tabpanel"] {
-  width: 100% !important;
-  margin-top: 0 !important;
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
-/* Prevent layout shifts */
-.tab-content {
-  width: 100%;
-  min-height: 200px;
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
 }
 
-/* Better responsive header */
-@media (min-width: 1024px) {
-  .header-desktop {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 2rem !important;
-  }
-  
-  .header-desktop h1 {
-    font-size: 2.25rem !important;
-    margin-bottom: 0.5rem !important;
-  }
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Preview panel sticky positioning */
+.sticky-preview {
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+/* Enhance scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.8);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* Button hover effects - but exclude tab triggers */
+button:not([role="tab"]):hover {
+  transform: translateY(-1px);
+}
+
+button:not([role="tab"]):active {
+  transform: translateY(0);
+}
+
+/* Error state styling */
+.error-state {
+  color: #dc2626;
+  background: rgba(254, 226, 226, 0.8);
+  border-color: rgba(248, 113, 113, 0.8);
+}
+
+/* Success state styling */
+.success-state {
+  color: #16a34a;
+  background: rgba(220, 252, 231, 0.8);
+  border-color: rgba(74, 222, 128, 0.8);
+}
+
+/* Warning state styling */
+.warning-state {
+  color: #d97706;
+  background: rgba(254, 243, 199, 0.8);
+  border-color: rgba(251, 191, 36, 0.8);
+}
+
+/* Enhanced shadcn/ui tabs styling - work with the component, don't override it */
+[data-state="active"][role="tab"] {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Custom focus states for better accessibility */
+[role="tab"]:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
 }
