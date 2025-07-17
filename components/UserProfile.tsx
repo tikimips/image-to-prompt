@@ -1,106 +1,88 @@
-import React from 'react'
-import { Button } from './ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from './ui/dropdown-menu'
-import { useAuth } from '../contexts/AuthContext'
-import { LogOut, User, Settings, Shield } from 'lucide-react'
+import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from './ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { LogOut, User, Settings } from 'lucide-react';
 
 export function UserProfile() {
-  const { user, signOut, isLoading } = useAuth()
-
-  if (!user) return null
+  const { user, signOut } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut()
-  }
+    try {
+      setIsLoading(true);
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Get user display info using correct property names
-  const userDisplayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-  const userEmail = user.email
-  const userAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture
-  
-  // Create initials from name or email
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
+  if (!user) return null;
+
+  const displayName = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.email?.split('@')[0] || 
+                     'User';
+
+  const avatarUrl = user.user_metadata?.avatar_url;
+  const initials = displayName.split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full"
+        >
           <Avatar className="h-10 w-10">
-            <AvatarImage src={userAvatar} alt={userDisplayName} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-              {getInitials(userDisplayName)}
+            <AvatarImage src={avatarUrl} alt={displayName} />
+            <AvatarFallback className="bg-blue-100 text-blue-700">
+              {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={userAvatar} alt={userDisplayName} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                  {getInitials(userDisplayName)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{userDisplayName}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {userEmail}
-                </p>
-              </div>
-            </div>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <div className="flex items-center justify-start gap-2 p-2">
+          <div className="flex flex-col space-y-1 leading-none">
+            <p className="font-medium">{displayName}</p>
+            <p className="w-[200px] truncate text-sm text-muted-foreground">
+              {user.email}
+            </p>
           </div>
-        </DropdownMenuLabel>
-        
+        </div>
         <DropdownMenuSeparator />
-        
-        <DropdownMenuItem disabled className="cursor-default">
+        <DropdownMenuItem disabled>
           <User className="mr-2 h-4 w-4" />
-          <span className="text-xs text-muted-foreground">Profile settings coming soon</span>
+          <span>Profile</span>
         </DropdownMenuItem>
-        
-        <DropdownMenuItem disabled className="cursor-default">
+        <DropdownMenuItem disabled>
           <Settings className="mr-2 h-4 w-4" />
-          <span className="text-xs text-muted-foreground">Preferences coming soon</span>
+          <span>Settings</span>
         </DropdownMenuItem>
-        
         <DropdownMenuSeparator />
-        
-        <DropdownMenuItem className="cursor-default">
-          <Shield className="mr-2 h-4 w-4" />
-          <div className="flex flex-col">
-            <span className="text-xs font-medium">Account Status</span>
-            <span className="text-xs text-green-600">✓ Authenticated via Google</span>
-          </div>
-        </DropdownMenuItem>
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={handleSignOut}
           disabled={isLoading}
-          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+          className="text-red-600 focus:text-red-600"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          {isLoading ? 'Signing out...' : 'Sign out'}
+          <span>{isLoading ? 'Signing out...' : 'Sign out'}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
