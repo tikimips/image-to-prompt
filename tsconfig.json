@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "useDefineForClassFields": true,
+    "useDefiningForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
@@ -17,23 +17,15 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "vite-env.d.ts",
-    "App.tsx",
-    "main.tsx",
-    "components/**/*",
-    "contexts/**/*",
-    "services/**/*",
-    "utils/**/*"
+    "**/*.ts",
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules",
     "dist",
     "vite.config.ts",
-    "*.config.js",
-    "*.config.ts",
-    "setup-*.js",
-    "cleanup-*.js",
-    "deploy.sh",
-    "*.md"
+    "tailwind.config.js",
+    "postcss.config.js",
+    "**/*.js"
   ]
 }
