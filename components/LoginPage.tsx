@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, AlertCircle } from 'lucide-react';
 
 export function LoginPage() {
   const { signInWithGoogle } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       await signInWithGoogle();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
+      setError(error.message || 'Failed to sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -36,6 +39,14 @@ export function LoginPage() {
             AI-powered image analysis &amp; prompt generation
           </p>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
           {/* Sign In Button */}
           <Button
             onClick={handleGoogleSignIn}
@@ -58,6 +69,20 @@ export function LoginPage() {
           <p className="text-xs text-slate-500 mt-4">
             By signing in, you agree to our terms of service
           </p>
+
+          {/* Environment setup help */}
+          {error && error.includes('not configured') && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
+              <h3 className="font-medium text-blue-900 mb-2">Setup Required</h3>
+              <p className="text-sm text-blue-700 mb-2">
+                To enable authentication, add your Supabase credentials to a <code className="bg-blue-100 px-1 rounded">.env.local</code> file:
+              </p>
+              <pre className="text-xs bg-blue-100 p-2 rounded font-mono text-blue-800">
+{`VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_ANON_KEY=your-anon-key`}
+              </pre>
+            </div>
+          )}
         </div>
       </div>
     </div>
