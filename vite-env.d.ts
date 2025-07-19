@@ -9,8 +9,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
-
-// Ensure import.meta exists in TypeScript
-declare const import: {
-  meta: ImportMeta
-}
