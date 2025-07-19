@@ -1,52 +1,42 @@
+// Safe environment variable access
+const getEnvVar = (key: string): string => {
+  try {
+    return import.meta?.env?.[key] || '';
+  } catch (error) {
+    console.warn(`Failed to access environment variable ${key}:`, error);
+    return '';
+  }
+};
+
 export const checkEnvironmentVariables = () => {
-  const checks = {
-    supabaseUrl: {
-      value: import.meta.env.VITE_SUPABASE_URL,
-      present: !!import.meta.env.VITE_SUPABASE_URL,
-      valid: !!import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_URL.startsWith('https://')
-    },
-    supabaseAnonKey: {
-      value: import.meta.env.VITE_SUPABASE_ANON_KEY,
-      present: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-      valid: !!import.meta.env.VITE_SUPABASE_ANON_KEY && import.meta.env.VITE_SUPABASE_ANON_KEY.length > 50
-    },
-    openaiApiKey: {
-      value: import.meta.env.VITE_OPENAI_API_KEY,
-      present: !!import.meta.env.VITE_OPENAI_API_KEY,
-      valid: !!import.meta.env.VITE_OPENAI_API_KEY && import.meta.env.VITE_OPENAI_API_KEY.startsWith('sk-')
+  const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
+  const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
+  
+  // Validate that we have proper values (not placeholders)
+  const isValidUrl = supabaseUrl && 
+    supabaseUrl !== 'your-supabase-project-url' && 
+    supabaseUrl.startsWith('https://') &&
+    supabaseUrl.length > 10;
+    
+  const isValidKey = supabaseKey && 
+    supabaseKey !== 'your-supabase-anon-key' && 
+    supabaseKey.length > 10;
+
+  const isConfigured = isValidUrl && isValidKey;
+
+  return {
+    isConfigured,
+    supabaseUrl,
+    supabaseKey,
+    hasValidUrl: isValidUrl,
+    hasValidKey: isValidKey,
+    missing: !isConfigured ? ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] : [],
+    // Additional debug info
+    debug: {
+      urlLength: supabaseUrl.length,
+      keyLength: supabaseKey.length,
+      urlStartsWithHttps: supabaseUrl.startsWith('https://'),
+      envAvailable: typeof import.meta !== 'undefined'
     }
   };
-
-  return checks;
 };
-
-export const logEnvironmentStatus = () => {
-  const checks = checkEnvironmentVariables();
-  
-  console.log('🔧 Environment Variables Status:');
-  console.log('================================');
-  
-  Object.entries(checks).forEach(([key, check]) => {
-    const status = check.present ? (check.valid ? '✅' : '⚠️') : '❌';
-    const message = check.present ? (check.valid ? 'Valid' : 'Invalid format') : 'Missing';
-    
-    console.log(`${status} ${key}: ${message}`);
-    
-    // Show partial value for debugging (only first/last few characters)
-    if (check.present && check.value) {
-      const maskedValue = key === 'supabaseUrl' 
-        ? check.value 
-        : `${check.value.substring(0, 8)}...${check.value.substring(check.value.length - 4)}`;
-      console.log(`   Value: ${maskedValue}`);
-    }
-  });
-  
-  console.log('================================');
-  
-  return checks;
-};
-
-// Auto-run environment check in development
-if (import.meta.env.DEV) {
-  logEnvironmentStatus();
-}

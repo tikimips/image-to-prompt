@@ -1,123 +1,105 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// Environment variable check with fallbacks
-const getEnvVar = (key: string): string => {
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    return import.meta.env[key] || '';
-  }
-  // Fallback for build environments
-  return '';
-};
-
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
-
-// Create supabase client with error handling
-let supabase: any = null;
-try {
-  if (supabaseUrl && supabaseAnonKey) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
-  } else {
-    console.warn('Supabase environment variables not found. Using demo mode.');
-    // Create a mock client for demo purposes
-    supabase = {
-      auth: {
-        getSession: () => Promise.resolve({ data: { session: null } }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        signInWithOAuth: () => Promise.resolve({ error: new Error('Demo mode: Supabase not configured') }),
-        signOut: () => Promise.resolve({ error: null })
-      }
-    };
-  }
-} catch (error) {
-  console.error('Failed to initialize Supabase:', error);
-  // Fallback mock client
-  supabase = {
-    auth: {
-      getSession: () => Promise.resolve({ data: { session: null } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signInWithOAuth: () => Promise.resolve({ error: new Error('Supabase initialization failed') }),
-      signOut: () => Promise.resolve({ error: null })
-    }
-  };
-}
-
-interface User {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    full_name?: string;
-    name?: string;
-    avatar_url?: string;
-  };
-}
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { authService } from '../services/auth';
+import { checkEnvironmentVariables } from '../utils/envCheck';
+import type { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isSupabaseConfigured: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const { isConfigured: isSupabaseConfigured } = checkEnvironmentVariables();
 
   useEffect(() => {
     // Get initial session
-    if (supabase && supabase.auth) {
-      supabase.auth.getSession().then(({ data: { session } }: any) => {
-        setUser(session?.user || null);
+    const getSession = async () => {
+      try {
+        if (!isSupabaseConfigured) {
+          // Demo mode - create a mock user
+          setUser({
+            id: 'demo-user',
+            email: 'demo@promptshop.ai',
+            user_metadata: { full_name: 'Demo User' }
+          } as User);
+          setIsLoading(false);
+          return;
+        }
+
+        const { session, error } = await authService.getSession();
+        if (error) {
+          console.error('Session error:', error);
+          setError(error.message);
+        } else {
+          setUser(session?.user ?? null);
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        setError(err instanceof Error ? err.message : 'Authentication initialization failed');
+      } finally {
         setIsLoading(false);
-      }).catch((error: any) => {
-        console.error('Error getting session:', error);
+      }
+    };
+
+    getSession();
+
+    // Listen for auth changes (only if Supabase is configured)
+    if (isSupabaseConfigured) {
+      const { data: { subscription } } = authService.onAuthStateChange((event, session) => {
+        setUser(session?.user ?? null);
         setIsLoading(false);
+        if (event === 'SIGNED_OUT') {
+          setError(null);
+        }
       });
 
-      // Listen for auth changes
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event: string, session: any) => {
-          setUser(session?.user || null);
-          setIsLoading(false);
-        }
-      );
-
-      return () => subscription?.unsubscribe();
-    } else {
-      setIsLoading(false);
+      return () => subscription.unsubscribe();
     }
-  }, []);
+  }, [isSupabaseConfigured]);
 
   const signInWithGoogle = async () => {
-    if (!supabase || !supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
-    }
-    
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
+    try {
+      setError(null);
+      setIsLoading(true);
+      
+      if (!isSupabaseConfigured) {
+        throw new Error('Supabase not configured. Cannot sign in.');
       }
-    });
-    if (error) {
-      console.error('Error signing in with Google:', error);
-      throw error;
+
+      await authService.signInWithGoogle();
+    } catch (err) {
+      console.error('Sign in error:', err);
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
-    if (!supabase) {
-      return;
-    }
-    
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-      throw error;
+    try {
+      setError(null);
+      
+      if (!isSupabaseConfigured) {
+        // Demo mode logout
+        setUser(null);
+        return;
+      }
+
+      await authService.signOut();
+    } catch (err) {
+      console.error('Sign out error:', err);
+      setError(err instanceof Error ? err.message : 'Sign out failed');
     }
   };
 
@@ -125,8 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isLoading,
     isAuthenticated: !!user,
+    isSupabaseConfigured,
     signInWithGoogle,
-    signOut
+    signOut,
+    error
   };
 
   return (

@@ -1,88 +1,84 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
 import { LogOut, User, Settings } from 'lucide-react';
 
 export function UserProfile() {
-  const { user, signOut } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, signOut, isSupabaseConfigured } = useAuth();
 
   const handleSignOut = async () => {
     try {
-      setIsLoading(true);
       await signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      console.error('Sign out failed:', err);
     }
   };
 
-  if (!user) return null;
+  const getUserDisplayName = () => {
+    if (!user) return 'User';
+    return user.user_metadata?.full_name || 
+           user.user_metadata?.name || 
+           user.email?.split('@')[0] || 
+           'User';
+  };
 
-  const displayName = user.user_metadata?.full_name || 
-                     user.user_metadata?.name || 
-                     user.email?.split('@')[0] || 
-                     'User';
-
-  const avatarUrl = user.user_metadata?.avatar_url;
-  const initials = displayName.split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="relative h-10 w-10 rounded-full"
-        >
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={avatarUrl} alt={displayName} />
-            <AvatarFallback className="bg-blue-100 text-blue-700">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <div className="flex items-center justify-start gap-2 p-2">
-          <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-medium">{displayName}</p>
-            <p className="w-[200px] truncate text-sm text-muted-foreground">
-              {user.email}
-            </p>
+    <div className="flex items-center gap-3">
+      {/* User Avatar */}
+      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+        {user?.user_metadata?.avatar_url ? (
+          <img 
+            src={user.user_metadata.avatar_url} 
+            alt={getUserDisplayName()}
+            className="w-full h-full rounded-full object-cover"
+          />
+        ) : (
+          <span>{getUserInitials()}</span>
+        )}
+      </div>
+
+      {/* User Info */}
+      <div className="hidden sm:block text-right">
+        <p className="text-sm font-medium text-slate-800">
+          {getUserDisplayName()}
+        </p>
+        <p className="text-xs text-slate-500">
+          {user?.email}
+        </p>
+      </div>
+
+      {/* Dropdown Menu */}
+      <div className="relative group">
+        <button className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
+          <Settings className="w-4 h-4" />
+        </button>
+        
+        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+          <div className="p-2">
+            <div className="px-3 py-2 border-b border-slate-100">
+              <p className="text-sm font-medium text-slate-800">{getUserDisplayName()}</p>
+              <p className="text-xs text-slate-500">{user?.email}</p>
+              {!isSupabaseConfigured && (
+                <span className="inline-block text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded mt-1">
+                  Demo Mode
+                </span>
+              )}
+            </div>
+            
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
           </div>
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={handleSignOut}
-          disabled={isLoading}
-          className="text-red-600 focus:text-red-600"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>{isLoading ? 'Signing out...' : 'Sign out'}</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </div>
+    </div>
   );
 }

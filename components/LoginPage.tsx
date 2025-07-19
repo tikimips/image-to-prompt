@@ -1,60 +1,66 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertTriangle } from 'lucide-react';
 
 export function LoginPage() {
-  const { signInWithGoogle } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { signInWithGoogle, isLoading, error, isSupabaseConfigured } = useAuth();
 
   const handleGoogleSignIn = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
       await signInWithGoogle();
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      setError(error.message || 'Failed to sign in. Please try again.');
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      console.error('Login failed:', err);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-lg p-8 text-center">
           {/* Logo */}
-          <div className="flex items-center gap-3 justify-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-white" />
+          <div className="flex items-center gap-3 justify-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Prompt Shop
-            </h1>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Prompt Shop
+              </h1>
+            </div>
           </div>
 
           <p className="text-slate-600 mb-8">
             AI-powered image analysis &amp; prompt generation
           </p>
 
-          {/* Error Message */}
+          {/* Configuration Status */}
+          {!isSupabaseConfigured && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 justify-center">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-amber-800">Demo Mode</span>
+              </div>
+              <p className="text-sm text-amber-700 mt-1">
+                Supabase environment variables not found. Some features may be limited.
+              </p>
+            </div>
+          )}
+
+          {/* Error Display */}
           {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <p className="text-sm">{error}</p>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
           {/* Sign In Button */}
-          <Button
+          <button
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-3"
+            disabled={isLoading || !isSupabaseConfigured}
+            className="w-full bg-white border border-slate-300 rounded-lg px-6 py-3 flex items-center justify-center gap-3 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -63,26 +69,31 @@ export function LoginPage() {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
             )}
-            {isLoading ? 'Signing in...' : 'Continue with Google'}
-          </Button>
+            <span className="text-slate-700 font-medium">
+              {isSupabaseConfigured ? 'Continue with Google' : 'Google OAuth (Setup Required)'}
+            </span>
+          </button>
 
-          <p className="text-xs text-slate-500 mt-4">
-            By signing in, you agree to our terms of service
-          </p>
-
-          {/* Environment setup help */}
-          {error && error.includes('not configured') && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
-              <h3 className="font-medium text-blue-900 mb-2">Setup Required</h3>
-              <p className="text-sm text-blue-700 mb-2">
-                To enable authentication, add your Supabase credentials to a <code className="bg-blue-100 px-1 rounded">.env.local</code> file:
+          {/* Demo Mode Info */}
+          {!isSupabaseConfigured && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="font-semibold text-blue-800 mb-2">Setup Required</h3>
+              <p className="text-sm text-blue-700 mb-3">
+                To enable Google authentication, configure your Supabase environment variables:
               </p>
-              <pre className="text-xs bg-blue-100 p-2 rounded font-mono text-blue-800">
-{`VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-anon-key`}
-              </pre>
+              <ul className="text-xs text-blue-600 text-left space-y-1">
+                <li>• VITE_SUPABASE_URL</li>
+                <li>• VITE_SUPABASE_ANON_KEY</li>
+              </ul>
+              <p className="text-xs text-blue-600 mt-2">
+                See .env.example for the template.
+              </p>
             </div>
           )}
+
+          <p className="text-xs text-slate-500 mt-6">
+            By continuing, you agree to our Terms of Service and Privacy Policy.
+          </p>
         </div>
       </div>
     </div>
