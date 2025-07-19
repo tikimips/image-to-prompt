@@ -16,7 +16,24 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "*.ts", "*.tsx"],
-  "exclude": ["node_modules", "dist", "vite.config.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": [
+    "vite-env.d.ts",
+    "App.tsx",
+    "main.tsx",
+    "components/**/*",
+    "contexts/**/*",
+    "services/**/*",
+    "utils/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "vite.config.ts",
+    "*.config.js",
+    "*.config.ts",
+    "setup-*.js",
+    "cleanup-*.js",
+    "deploy.sh",
+    "*.md"
+  ]
 }
