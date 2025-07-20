@@ -1,5 +1,4 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import type { User } from '@supabase/supabase-js';
 
 export const authService = {
   async signInWithGoogle() {
@@ -14,7 +13,10 @@ export const authService = {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
+
     return data;
   },
 
@@ -24,7 +26,10 @@ export const authService = {
     }
 
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    
+    if (error) {
+      throw error;
+    }
   },
 
   async getSession() {
@@ -34,13 +39,5 @@ export const authService = {
 
     const { data, error } = await supabase.auth.getSession();
     return { session: data.session, error };
-  },
-
-  onAuthStateChange(callback: (event: string, session: any) => void) {
-    if (!isSupabaseConfigured || !supabase) {
-      return { data: { subscription: { unsubscribe: () => {} } } };
-    }
-
-    return supabase.auth.onAuthStateChange(callback);
   }
 };

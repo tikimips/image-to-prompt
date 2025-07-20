@@ -1,266 +1,174 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Badge } from './ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Copy, Share2, Clock, Save, ImageIcon, Sparkles } from 'lucide-react';
-import { QueryHistory as QueryHistoryType, SavedPrompt } from '../App';
-import { toast } from 'sonner';
+import { Copy, Download, Heart, Share2, Tag, Calendar, Image as ImageIcon, CheckCircle } from 'lucide-react';
 
-interface QueryHistoryProps {
-  queries: QueryHistoryType[];
-  onSave: (prompt: SavedPrompt) => void;
-  onSaveFromHistory?: (prompt: SavedPrompt, queryId: string) => void;
+interface PromptPreviewProps {
+  prompt: {
+    id: string;
+    image?: string;
+    description: string;
+    prompts: string[];
+    tags: string[];
+    createdAt: string;
+    fileName?: string;
+  };
 }
 
-export function QueryHistory({ queries, onSave, onSaveFromHistory }: QueryHistoryProps) {
-  const [selectedQuery, setSelectedQuery] = useState<QueryHistoryType | null>(null);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [promptName, setPromptName] = useState<string>('');
+export function PromptPreview({ prompt }: PromptPreviewProps) {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
-  const handleQuerySelect = (query: QueryHistoryType) => {
-    setSelectedQuery(query);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Prompt copied to clipboard!');
-  };
-
-  const sharePrompt = (query: QueryHistoryType) => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Generated AI Prompt',
-        text: query.prompt,
-      });
-    } else {
-      copyToClipboard(query.prompt);
+  const copyToClipboard = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
     }
   };
 
-  const handleSave = () => {
-    if (!selectedQuery || !promptName.trim()) {
-      toast.error('Please enter a name for the prompt');
-      return;
-    }
-
-    const newPrompt: SavedPrompt = {
-      id: Date.now().toString(),
-      name: promptName,
-      prompt: selectedQuery.prompt,
-      imageUrl: selectedQuery.imageUrl,
-      createdAt: new Date().toISOString(),
-      style: selectedQuery.style
-    };
-
-    if (onSaveFromHistory) {
-      onSaveFromHistory(newPrompt, selectedQuery.id);
-    } else {
-      onSave(newPrompt);
-    }
-    
-    setShowSaveDialog(false);
-    setPromptName('');
-    toast.success('Prompt saved successfully!');
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  const getStyleDisplayName = (style: string) => {
-    const styleMap: { [key: string]: string } = {
-      'photorealistic': 'Photorealistic',
-      'digital_art': 'Digital Art',
-      'digital art': 'Digital Art',
-      'vintage': 'Vintage',
-      'minimalist': 'Minimalist',
-      'abstract': 'Abstract',
-      'watercolor': 'Watercolor',
-      'oil_painting': 'Oil Painting',
-      'oil painting': 'Oil Painting',
-      'sketch': 'Sketch',
-      'unknown': 'Unknown'
-    };
-    return styleMap[style] || style.charAt(0).toUpperCase() + style.slice(1);
-  };
+  const downloadPrompts = () => {
+    const content = `Image Analysis Report
+Generated: ${formatDate(prompt.createdAt)}
+${prompt.fileName ? `File: ${prompt.fileName}` : ''}
 
-  if (queries.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <div className="text-center space-y-2">
-            <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg">No query history</h3>
-            <p className="text-gray-600">Generate some prompts to see your history here!</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+Description:
+${prompt.description}
+
+Generated Prompts:
+${prompt.prompts.map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Tags:
+${prompt.tags.join(', ')}
+`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `prompt-analysis-${prompt.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Query History ({queries.length}/50)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 max-h-96 overflow-y-auto">
-            {queries.map((query) => (
-              <div
-                key={query.id}
-                onClick={() => handleQuerySelect(query)}
-                className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <img
-                  src={query.imageUrl}
-                  alt="Query"
-                  className="w-24 h-24 object-cover rounded-md flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{query.prompt}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {query.style && query.style !== 'unknown' && (
-                      <Badge variant="outline" className="text-xs">
-                        {getStyleDisplayName(query.style)}
-                      </Badge>
+    <div className="space-y-6 h-full flex flex-col">
+      {/* Header Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Calendar className="h-4 w-4" />
+          <span>{formatDate(prompt.createdAt)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsFavorite(!isFavorite)}
+            className={`p-2 rounded-lg transition-colors ${
+              isFavorite
+                ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+            }`}
+            title="Add to favorites"
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+          <button
+            onClick={downloadPrompts}
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            title="Download report"
+          >
+            <Download className="h-4 w-4" />
+          </button>
+          <button
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            title="Share"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Image Preview */}
+      {prompt.image && (
+        <div className="bg-slate-50 rounded-xl p-4">
+          <div className="aspect-video w-full bg-white rounded-lg overflow-hidden shadow-sm">
+            <img
+              src={prompt.image}
+              alt="Analyzed image"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          {prompt.fileName && (
+            <div className="flex items-center gap-2 mt-3 text-sm text-slate-600">
+              <ImageIcon className="h-4 w-4" />
+              <span className="truncate">{prompt.fileName}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 space-y-6 overflow-y-auto">
+        {/* Description */}
+        <div>
+          <h4 className="font-medium text-slate-800 mb-3">Description</h4>
+          <div className="bg-slate-50 rounded-lg p-4">
+            <p className="text-sm text-slate-700 leading-relaxed">{prompt.description}</p>
+          </div>
+        </div>
+
+        {/* Generated Prompts */}
+        <div>
+          <h4 className="font-medium text-slate-800 mb-3">Generated Prompts</h4>
+          <div className="space-y-3">
+            {prompt.prompts.map((promptText, index) => (
+              <div key={index} className="group bg-white border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm text-slate-700 leading-relaxed flex-1">{promptText}</p>
+                  <button
+                    onClick={() => copyToClipboard(promptText, index)}
+                    className="flex-shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Copy prompt"
+                  >
+                    {copiedIndex === index ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
                     )}
-                    {query.confidence && (
-                      <Badge variant="secondary" className="text-xs">
-                        {Math.round(query.confidence * 100)}%
-                      </Badge>
-                    )}
-                    <span className="text-xs text-gray-500">
-                      {new Date(query.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-
-      {selectedQuery && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="h-5 w-5" />
-                Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <h3 className="font-medium">Original Image</h3>
-                <img
-                  src={selectedQuery.imageUrl}
-                  alt="Original"
-                  className="w-full h-64 object-cover rounded-lg"
-                />
-              </div>
-
-              {selectedQuery.confidence && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <Sparkles className="h-4 w-4 inline mr-1" />
-                    AI Analysis Confidence: {Math.round(selectedQuery.confidence * 100)}%
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Generated Prompt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                <Clock className="h-4 w-4" />
-                Generated on {new Date(selectedQuery.createdAt).toLocaleString()}
-                {selectedQuery.style && selectedQuery.style !== 'unknown' && (
-                  <>
-                    <span className="mx-2">•</span>
-                    <Badge variant="outline" className="text-xs">
-                      {getStyleDisplayName(selectedQuery.style)}
-                    </Badge>
-                  </>
-                )}
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm leading-relaxed">{selectedQuery.prompt}</p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => copyToClipboard(selectedQuery.prompt)}
-                  variant="outline"
-                  size="sm"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
-                </Button>
-                <Button
-                  onClick={() => sharePrompt(selectedQuery)}
-                  variant="outline"
-                  size="sm"
-                >
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-                <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Save className="h-4 w-4 mr-2" />
-                      Save to Library
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Save to Library</DialogTitle>
-                      <DialogDescription>
-                        Save this prompt from your history to your library with a custom name.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="prompt-name">Prompt Name</Label>
-                        <Input
-                          id="prompt-name"
-                          value={promptName}
-                          onChange={(e) => setPromptName(e.target.value)}
-                          placeholder="Enter a name for your prompt"
-                        />
-                      </div>
-                      {selectedQuery.style && selectedQuery.style !== 'unknown' && (
-                        <div className="text-sm text-gray-600">
-                          Detected style: <span className="font-medium">{getStyleDisplayName(selectedQuery.style)}</span>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button onClick={handleSave} className="flex-1">
-                          Save
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setShowSaveDialog(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardContent>
-          </Card>
         </div>
-      )}
+
+        {/* Tags */}
+        <div>
+          <h4 className="font-medium text-slate-800 mb-3">Tags</h4>
+          <div className="flex flex-wrap gap-2">
+            {prompt.tags.map((tag, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium"
+              >
+                <Tag className="h-3 w-3" />
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

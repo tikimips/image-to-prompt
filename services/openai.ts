@@ -1,51 +1,56 @@
 // Safe environment variable access
 const getEnvVar = (key: string): string => {
   try {
-    return import.meta?.env?.[key] || '';
-  } catch (error) {
-    console.warn(`Failed to access environment variable ${key}:`, error);
+    return (import.meta.env && import.meta.env[key]) || '';
+  } catch {
     return '';
   }
 };
 
-// OpenAI service for image analysis and prompt generation
-export const openaiService = {
-  async analyzeImage(imageFile: File) {
-    const apiKey = getEnvVar('VITE_OPENAI_API_KEY');
-    
-    if (!apiKey || apiKey === 'your-openai-api-key') {
-      throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
+const OPENAI_API_KEY = getEnvVar('VITE_OPENAI_API_KEY');
+
+export interface ImageAnalysisResult {
+  description: string;
+  prompts: string[];
+  tags: string[];
+}
+
+export const openAIService = {
+  async analyzeImage(imageBase64: string): Promise<ImageAnalysisResult> {
+    if (!OPENAI_API_KEY) {
+      // Return mock data if no API key is configured
+      return {
+        description: "Mock analysis: A beautiful landscape with mountains and trees in the background.",
+        prompts: [
+          "A serene mountain landscape with evergreen trees",
+          "Nature photography of mountain peaks at sunset",
+          "Peaceful outdoor scene with natural lighting"
+        ],
+        tags: ["landscape", "mountains", "nature", "trees", "scenic"]
+      };
     }
 
     try {
-      // Convert image to base64
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(imageFile);
-      });
-
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'gpt-4-vision-preview',
+          model: "gpt-4-vision-preview",
           messages: [
             {
-              role: 'user',
+              role: "user",
               content: [
                 {
-                  type: 'text',
-                  text: 'Analyze this image and generate a detailed prompt that could be used to recreate it with AI image generation tools. Focus on style, composition, colors, mood, and technical details.'
+                  type: "text",
+                  text: "Analyze this image and provide: 1) A detailed description, 2) 3-5 creative prompts for recreating similar images, 3) Relevant tags. Format as JSON with keys: description, prompts (array), tags (array)."
                 },
                 {
-                  type: 'image_url',
+                  type: "image_url",
                   image_url: {
-                    url: base64Image
+                    url: `data:image/jpeg;base64,${imageBase64}`
                   }
                 }
               ]
@@ -56,24 +61,29 @@ export const openaiService = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}. ${errorData.error?.message || ''}`);
+        throw new Error(`OpenAI API error: ${response.status}`);
       }
 
       const data = await response.json();
-      return data.choices[0]?.message?.content || 'Unable to generate prompt for this image.';
-    } catch (error) {
-      console.error('OpenAI API error:', error);
-      if (error instanceof Error) {
-        throw error;
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error('No response from OpenAI');
       }
-      throw new Error('Failed to analyze image with OpenAI API');
-    }
-  },
 
-  // Check if OpenAI is configured
-  isConfigured() {
-    const apiKey = getEnvVar('VITE_OPENAI_API_KEY');
-    return !!(apiKey && apiKey !== 'your-openai-api-key' && apiKey.length > 10);
+      try {
+        return JSON.parse(content);
+      } catch {
+        // If JSON parsing fails, create structured response
+        return {
+          description: content,
+          prompts: ["Creative prompt based on the analyzed image"],
+          tags: ["ai-analyzed", "image"]
+        };
+      }
+    } catch (error) {
+      console.error('OpenAI analysis error:', error);
+      throw error;
+    }
   }
 };

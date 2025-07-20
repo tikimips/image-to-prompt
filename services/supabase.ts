@@ -1,39 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Safe environment variable access with fallbacks
+// Safe environment variable access with proper fallbacks
 const getEnvVar = (key: string): string => {
   try {
-    return import.meta?.env?.[key] || '';
-  } catch (error) {
-    console.warn(`Failed to access environment variable ${key}:`, error);
+    return (import.meta.env && import.meta.env[key]) || '';
+  } catch {
     return '';
   }
 };
 
 const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
-const supabaseKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
 
-// Validate that we have proper Supabase credentials (not placeholder values)
-const isValidUrl = supabaseUrl && 
-  supabaseUrl !== 'your-supabase-project-url' && 
-  supabaseUrl.startsWith('https://') &&
-  supabaseUrl.length > 20;
-
-const isValidKey = supabaseKey && 
-  supabaseKey !== 'your-supabase-anon-key' && 
-  supabaseKey.length > 20;
-
-// Create Supabase client only if properly configured
-export const supabase = (isValidUrl && isValidKey)
-  ? createClient(supabaseUrl, supabaseKey)
+// Create Supabase client only if both URL and key are provided
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-export const isSupabaseConfigured = !!supabase;
+// Helper to check if Supabase is configured
+export const isSupabaseConfigured = !!(
+  supabaseUrl && 
+  supabaseAnonKey &&
+  supabaseUrl !== 'your_supabase_project_url' &&
+  supabaseAnonKey !== 'your_supabase_anon_key'
+);
 
-// Export safe environment values for debugging
-export const supabaseConfig = {
-  url: supabaseUrl,
-  hasValidUrl: isValidUrl,
-  hasValidKey: isValidKey,
+// Export environment values for debugging
+export const envConfig = {
+  supabaseUrl,
+  supabaseAnonKey,
   isConfigured: isSupabaseConfigured
 };
