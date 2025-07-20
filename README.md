@@ -11,7 +11,7 @@ Visit: [https://promptshop.ai](https://promptshop.ai)
 - 🤖 **AI Prompt Generation** - Powered by OpenAI Vision API
 - 📚 **Prompt Library** - Save and organize your favorite prompts  
 - 📊 **Query History** - Track all your image analyses
-- 🔒 **Authentication** - Secure login with Google & Apple OAuth
+- 🔒 **Authentication** - Secure login with Google & Apple O-Auth
 - 📱 **PWA Ready** - Install as a mobile app
 - 💾 **Local Storage** - All data saved locally with smart quota management
 - 🎨 **Multiple Style Options** - Generate prompts in different artistic styles
