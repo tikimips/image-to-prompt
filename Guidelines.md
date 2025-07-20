@@ -5,7 +5,7 @@
 - Use a base font-size of 14px
 - Maintain consistent spacing with Tailwind's spacing scale
 - Use glass-morphism effects for cards and overlays
-- Implement responsive design mobile first
+- Implement responsive design mobile-first
 - Use gradient backgrounds and modern UI patterns
 
 ## Component Guidelines
