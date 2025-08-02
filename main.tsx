@@ -1,10 +1,11 @@
-import Upload from "@/components/Upload";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
 
-export default function Home() {
-  return (
-    <main className="max-w-2xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-4">PromptShop.ai</h1>
-      <Upload />
-    </main>
-  );
-}
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
