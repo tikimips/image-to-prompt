@@ -1,10 +1,10 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './styles/globals.css'
+import Upload from "@/components/Upload";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+export default function Home() {
+  return (
+    <main className="max-w-2xl mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-4">PromptShop.ai</h1>
+      <Upload />
+    </main>
+  );
+}
