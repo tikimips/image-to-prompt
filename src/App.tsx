@@ -1,8 +1,8 @@
-// src/App.tsx
-import React from 'react';
+import './index.css';
+import MainPage from '../components/MainPage'; // adjust path if needed
 
 function App() {
-  return <h1>Hello from PromptShop!</h1>;
+  return <MainPage />; // or whatever your main component is
 }
 
 export default App;
