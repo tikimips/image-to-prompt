@@ -1,19 +1,10 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  root: './', // root is now the project root
   plugins: [react()],
   build: {
-    rollupOptions: {
-      input: resolve(__dirname, 'main.tsx'),
-    },
     outDir: 'dist',
-    emptyOutDir: true,
   },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-    },
-  },
-});
+})
