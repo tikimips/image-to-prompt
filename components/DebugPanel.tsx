@@ -85,7 +85,7 @@ export function DebugPanel() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>import.meta.env:</span>
+<span>{'import.meta.env:'}</span>
                     <span className={getEnvVar('VITE_SUPABASE_URL') || getEnvVar('VITE_SUPABASE_ANON_KEY') ? 'text-green-400' : 'text-red-400'}>
                       {getEnvVar('VITE_SUPABASE_URL') || getEnvVar('VITE_SUPABASE_ANON_KEY') ? '✓' : '✗'}
                     </span>
