@@ -1,8 +1,8 @@
-import './index.css';
-import MainPage from '../components/MainPage'; // adjust path if needed
+import '../styles/index.css';
+import Upload from '../components/Upload';
 
 function App() {
-  return <MainPage />; // or whatever your main component is
+  return <Upload />;
 }
 
 export default App;
