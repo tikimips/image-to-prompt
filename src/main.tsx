@@ -1,6 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css'; // or wherever your global styles are
 
-const App = () => <h1>Hello, PromptShop!</h1>
+const root = document.getElementById('root');
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<App />)
+if (root) {
+  ReactDOM.createRoot(root).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
